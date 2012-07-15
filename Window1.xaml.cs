@@ -18,12 +18,19 @@ namespace PdfImageChanger
     /// </summary>
     public partial class Window1 : Window
     {
+
+        #region Properties
+
         private Config _configObj;
         public Config configObj
         {
             get { return _configObj; }
             set { _configObj = value; }
         }
+
+        #endregion
+
+        #region Constructors
 
         public Window1()
         {
@@ -34,30 +41,27 @@ namespace PdfImageChanger
         {
             InitializeComponent();
             configObj = appConfig;
-
-            if (configObj == null)
-            {
-                _configObj = new Config();
-                _configObj.imageLinks = new List<ImageLink>();
-                _configObj.distributors = new List<Distributor>();
-            }
-            
-            if (_configObj.imageLinks == null)
-            {
-                _configObj.imageLinks = new List<ImageLink>();
-            }
-            
-            if (_configObj.distributors == null)
-            {
-                _configObj.distributors = new List<Distributor>();
-            }
-
-            //ImageLink url = new ImageLink();
-            //url.url = "http://www.facebook.com";
-            //url.prettyName = "facebook";
-            //_configObj.imageLinks.Add(url);
-
             dataGrid1.ItemsSource = _configObj.imageLinks;
+            dataGrid2.ItemsSource = _configObj.distributors;
         }
+
+        #endregion
+
+        #region Button Events
+
+        private void button1_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = true;
+            this.Close();
+        }
+
+        private void button2_Click(object sender, RoutedEventArgs e)
+        {
+            this.DialogResult = false;
+            this.Close();
+        }
+
+        #endregion
+
     }
 }
