@@ -13,5 +13,6 @@ namespace PdfImageChanger
         public double yStart { get; set; }
         public double width { get; set; }
         public double height { get; set; }
+        public bool drawRect { get; set; }
     }
 }

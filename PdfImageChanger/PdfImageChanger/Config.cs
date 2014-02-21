@@ -9,6 +9,7 @@ namespace PdfImageChanger
     {
         public List<ImageLink> imageLinks { get; set; }
         public List<Distributor> distributors { get; set; }
+        public string contactColor { get; set; }
     }
 
 }

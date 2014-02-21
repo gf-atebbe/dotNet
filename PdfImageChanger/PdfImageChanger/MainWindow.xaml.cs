@@ -90,6 +90,9 @@ namespace PdfImageChanger
         /// <param name="e"></param>
         private void button1_Click(object sender, RoutedEventArgs e)
         {
+            // Temp Path
+            string tempPath = System.IO.Path.GetTempPath();
+
             // Configure open file dialog box
             Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
             dlg.FileName = "Document"; // Default file name
@@ -107,7 +110,7 @@ namespace PdfImageChanger
                 // Open document
                 sourcePDF = dlg.FileName;
                 label1.Content = sourcePDF;
-                PdfDocument document = PdfReader.Open(sourcePDF);
+                PdfDocument document = CompatiblePdfReader.Open(sourcePDF, PdfDocumentOpenMode.ReadOnly);
                 int imageCount = 0;
                 List<string> imageList = new List<string>();
 
@@ -133,7 +136,7 @@ namespace PdfImageChanger
                                     if (xObject != null && xObject.Elements.GetString("/Subtype") == "/Image" && xObject.Elements.GetName("/Filter") == "/DCTDecode")
                                     {
                                         byte[] stream = xObject.Stream.Value;
-                                        string imageName = String.Format("Image{0}.jpeg", imageCount++);
+                                        string imageName = System.IO.Path.Combine(new string[] { tempPath, String.Format("Image{0}.jpeg", imageCount++)});
                                         if (!deletables.Contains(imageName))
                                         {
                                             deletables.Add(imageName);
@@ -148,7 +151,7 @@ namespace PdfImageChanger
                                             PdfImg newImage = new PdfImg();
                                             newImage.replace = false;
                                             newImage.imageCount = imageCount;
-                                            newImage.filename = System.AppDomain.CurrentDomain.BaseDirectory + imageName;
+                                            newImage.filename = imageName;
                                             newImage.sourceImg = xObject.Stream.Value;
                                             images.Add(newImage);
                                         }
@@ -172,59 +175,74 @@ namespace PdfImageChanger
         /// <param name="e"></param>
         private void button2_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < configuration.distributors.Count; i++)
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.DefaultExt = ".pdf";
+            dlg.Filter = "PDF documents (.pdf)|*.pdf";
+            dlg.RestoreDirectory = true;
+            if (dlg.ShowDialog() == true)
             {
-                PdfDocument document = PdfReader.Open(sourcePDF);
-                foreach (PdfPage page in document.Pages)
+                string filename = dlg.FileName;
+                string outPath = System.IO.Path.GetDirectoryName(filename);
+
+                for (int i = 0; i < configuration.distributors.Count; i++)
                 {
-                    PdfDictionary resources = page.Elements.GetDictionary("/Resources");
-                    if (resources != null)
+                    PdfDocument document = CompatiblePdfReader.Open(sourcePDF, PdfDocumentOpenMode.Modify);
+                    foreach (PdfPage page in document.Pages)
                     {
-                        PdfDictionary xObjects = resources.Elements.GetDictionary("/XObject");
-                        if (xObjects != null)
+                        PdfDictionary resources = page.Elements.GetDictionary("/Resources");
+                        if (resources != null)
                         {
-                            ICollection<PdfItem> items = xObjects.Elements.Values;
-                            foreach (PdfItem item in items)
+                            PdfDictionary xObjects = resources.Elements.GetDictionary("/XObject");
+                            if (xObjects != null)
                             {
-                                PdfReference reference = item as PdfReference;
-                                if (reference != null)
+                                ICollection<PdfItem> items = xObjects.Elements.Values;
+                                foreach (PdfItem item in items)
                                 {
-                                    PdfDictionary xObject = reference.Value as PdfDictionary;
-                                    if (xObject != null && xObject.Elements.GetString("/Subtype") == "/Image" && xObject.Elements.GetName("/Filter") == "/DCTDecode")
+                                    PdfReference reference = item as PdfReference;
+                                    if (reference != null)
                                     {
-                                        for (int j = 0; j < images.Count; j++)
+                                        PdfDictionary xObject = reference.Value as PdfDictionary;
+                                        if (xObject != null && xObject.Elements.GetString("/Subtype") == "/Image" && xObject.Elements.GetName("/Filter") == "/DCTDecode")
                                         {
-                                            IStructuralEquatable eqa1 = xObject.Stream.Value;
-                                            if (images[j].replace && eqa1.Equals(images[j].sourceImg, StructuralComparisons.StructuralEqualityComparer))
+                                            for (int j = 0; j < images.Count; j++)
                                             {
-                                                byte[] sourceImage = xObject.Stream.Value;
-                                                MemoryStream sourceMemStream = new MemoryStream();
-                                                sourceMemStream.Write(sourceImage, 0, sourceImage.Length);
-                                                System.Drawing.Image sourceImageInst = System.Drawing.Image.FromStream(sourceMemStream);
-
-                                                // Read image from file
-                                                using (FileStream fs = new FileStream(configuration.distributors[i].logo, FileMode.Open, FileAccess.Read))
+                                                IStructuralEquatable eqa1 = xObject.Stream.Value;
+                                                if (images[j].replace && eqa1.Equals(images[j].sourceImg, StructuralComparisons.StructuralEqualityComparer))
                                                 {
-                                                    BinaryReader br = new BinaryReader(fs);
-                                                    byte[] imageBytes = br.ReadBytes((int)fs.Length);
-                                                    br.Close();
+                                                    byte[] sourceImage = xObject.Stream.Value;
+                                                    MemoryStream sourceMemStream = new MemoryStream();
+                                                    sourceMemStream.Write(sourceImage, 0, sourceImage.Length);
+                                                    System.Drawing.Image sourceImageInst = System.Drawing.Image.FromStream(sourceMemStream);
 
-                                                    // Create a resized image
-                                                    MemoryStream memStream = new MemoryStream();
-                                                    memStream.Write(imageBytes, 0, imageBytes.Length);
-                                                    System.Drawing.Image image = System.Drawing.Image.FromStream(memStream);
-                                                    System.Drawing.Image.GetThumbnailImageAbort myCallback = new System.Drawing.Image.GetThumbnailImageAbort(ThumbnailCallback);
-                                                    System.Drawing.Image thumb = image.GetThumbnailImage(sourceImageInst.Width, sourceImageInst.Height, myCallback, IntPtr.Zero);
-                                                    memStream.Close();
+                                                    // Read image from file
+                                                    if (!File.Exists(configuration.distributors[i].logo))
+                                                    {
+                                                        MessageBox.Show("Error - I can't find the log file from the config file: " + configuration.distributors[i].logo, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                                    } else {
+                                                        using (FileStream fs = new FileStream(configuration.distributors[i].logo, FileMode.Open, FileAccess.Read))
+                                                        {
+                                                            BinaryReader br = new BinaryReader(fs);
+                                                            byte[] imageBytes = br.ReadBytes((int)fs.Length);
+                                                            br.Close();
 
-                                                    // Convert back to a stream from an image object
-                                                    MemoryStream ms = new MemoryStream();
-                                                    thumb.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-                                                    xObject.Stream.Value = ms.ToArray();
-                                                    ms.Close();
+                                                            // Create a resized image
+                                                            MemoryStream memStream = new MemoryStream();
+                                                            memStream.Write(imageBytes, 0, imageBytes.Length);
+                                                            System.Drawing.Image image = System.Drawing.Image.FromStream(memStream);
+                                                            System.Drawing.Image.GetThumbnailImageAbort myCallback = new System.Drawing.Image.GetThumbnailImageAbort(ThumbnailCallback);
+                                                            System.Drawing.Image thumb = image.GetThumbnailImage(sourceImageInst.Width, sourceImageInst.Height, myCallback, IntPtr.Zero);
+                                                            memStream.Close();
+
+                                                            // Convert back to a stream from an image object
+                                                            MemoryStream ms = new MemoryStream();
+                                                            thumb.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                                            xObject.Stream.Value = ms.ToArray();
+                                                            ms.Close();
+                                                        }
+                                                    }
+
+                                                    sourceMemStream.Close();
                                                 }
-
-                                                sourceMemStream.Close();
                                             }
                                         }
                                     }
@@ -232,50 +250,53 @@ namespace PdfImageChanger
                             }
                         }
                     }
-                }
 
-                // Add hyperlinks to the images at the bottom of the first page
-                for (int j = 0; j < configuration.imageLinks.Count; j++)
-                {
-                    using (var pdfGfx = XGraphics.FromPdfPage(document.Pages[0]))
+                    // Add hyperlinks to the images at the bottom of the first page
+                    for (int j = 0; j < configuration.imageLinks.Count; j++)
                     {
-                        XRect rect = new XRect(new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart, configuration.imageLinks[j].yStart), new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart + configuration.imageLinks[j].width, configuration.imageLinks[j].yStart + configuration.imageLinks[j].height));
-                        XRect tRect = pdfGfx.Transformer.WorldToDefaultPage(rect);
-                        PdfRectangle rc = new PdfSharp.Pdf.PdfRectangle(tRect);
-                        document.Pages[0].AddWebLink(rc, configuration.imageLinks[j].url);
+                        using (var pdfGfx = XGraphics.FromPdfPage(document.Pages[0]))
+                        {
+                            XRect rect = new XRect(new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart, configuration.imageLinks[j].yStart), new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart + configuration.imageLinks[j].width, configuration.imageLinks[j].yStart + configuration.imageLinks[j].height));
+                            XRect tRect = pdfGfx.Transformer.WorldToDefaultPage(rect);
+                            PdfRectangle rc = new PdfSharp.Pdf.PdfRectangle(tRect);
+                            document.Pages[0].AddWebLink(rc, configuration.imageLinks[j].url);
+
+                            if (configuration.imageLinks[j].drawRect)
+                            {
+                                XRect rect1 = new XRect(new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart, configuration.imageLinks[j].yStart), new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart + configuration.imageLinks[j].width, configuration.imageLinks[j].yStart + configuration.imageLinks[j].height));
+                                pdfGfx.DrawRectangle(XBrushes.Pink, rect1);
+                            }
+                        }
                     }
 
-                    //using (var pdfGfx = XGraphics.FromPdfPage(pageZero))
-                    //{
-                    //    XRect rect1 = new XRect(new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart, configuration.imageLinks[j].yStart), new PdfSharp.Drawing.XPoint(configuration.imageLinks[j].xStart + configuration.imageLinks[j].width, configuration.imageLinks[j].yStart + configuration.imageLinks[j].height));
-                    //    pdfGfx.DrawRectangle(XBrushes.Pink, rect1);
-                    //}
+                    // Add contact information to the first page
+                    XFont nameFont = new XFont("Times New Roman", 12, XFontStyle.Bold);
+                    XFont contactFont = new XFont("Times New Roman", 10, XFontStyle.Regular);
+                    int targetCenter = 400;
+
+                    using (var pdfGfx = XGraphics.FromPdfPage(document.Pages[0]))
+                    {
+                        XSize nameStringSize = pdfGfx.MeasureString(configuration.distributors[i].contactName, nameFont);
+                        XSize contactStringSize1 = pdfGfx.MeasureString(configuration.distributors[i].contactContact1, contactFont);
+                        XSize contactStringSize2 = pdfGfx.MeasureString(configuration.distributors[i].contactContact2, contactFont);
+
+                        int nameStart = targetCenter - (int)Math.Round((double)nameStringSize.Width / 2);
+                        int contactStart1 = targetCenter - (int)Math.Round((double)contactStringSize1.Width / 2);
+                        int contactStart2 = targetCenter - (int)Math.Round((double)contactStringSize2.Width / 2);
+
+                        //XBrush fontBrush = (XBrush)System.Reflection.Assembly.GetExecutingAssembly().CreateInstance("PdfSharp.Drawing.XBrushes." + configuration.contactColor);
+                        XBrush fontBrush = new XSolidBrush(XColor.FromName(configuration.contactColor));
+
+                        pdfGfx.DrawString(configuration.distributors[i].contactName, nameFont, fontBrush, nameStart, 150 + nameStringSize.Height * 0.6, XStringFormats.Default);
+                        pdfGfx.DrawString(configuration.distributors[i].contactContact1, contactFont, fontBrush, contactStart1, 162 + contactStringSize1.Height * 0.6, XStringFormats.Default);
+                        pdfGfx.DrawString(configuration.distributors[i].contactContact2, contactFont, fontBrush, contactStart2, 174 + contactStringSize2.Height * 0.6, XStringFormats.Default);
+                    }
+
+                    document.Save(filename.Replace(".pdf", "") + " - " + configuration.distributors[i].name + ".pdf");
                 }
 
-                // Add contact information to the first page
-                XFont nameFont = new XFont("Verdana", 10, XFontStyle.Bold);
-                XFont contactFont = new XFont("Verdana", 8, XFontStyle.Regular);
-                int targetCenter = 375;
-
-                using (var pdfGfx = XGraphics.FromPdfPage(document.Pages[0]))
-                {
-                    XSize nameStringSize = pdfGfx.MeasureString(configuration.distributors[i].contactName, nameFont);
-                    XSize contactStringSize1 = pdfGfx.MeasureString(configuration.distributors[i].contactContact1, contactFont);
-                    XSize contactStringSize2 = pdfGfx.MeasureString(configuration.distributors[i].contactContact2, contactFont);
-
-                    int nameStart = targetCenter - (int)Math.Round((double)nameStringSize.Width / 2);
-                    int contactStart1 = targetCenter - (int)Math.Round((double)contactStringSize1.Width / 2);
-                    int contactStart2 = targetCenter - (int)Math.Round((double)contactStringSize2.Width / 2);
-
-                    pdfGfx.DrawString(configuration.distributors[i].contactName, nameFont, XBrushes.White, nameStart, 95 + nameStringSize.Height * 0.6, XStringFormats.Default);
-                    pdfGfx.DrawString(configuration.distributors[i].contactContact1, contactFont, XBrushes.White, contactStart1, 105 + contactStringSize1.Height * 0.6, XStringFormats.Default);
-                    pdfGfx.DrawString(configuration.distributors[i].contactContact2, contactFont, XBrushes.White, contactStart2, 115 + contactStringSize2.Height * 0.6, XStringFormats.Default);
-                }
-
-                document.Save(configuration.distributors[i].name + ".pdf");
+                MessageBox.Show("PDF file(s) successfully saved!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-
-            MessageBox.Show("PDF file(s) successfully saved!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         /// <summary>
@@ -325,14 +346,15 @@ namespace PdfImageChanger
                 configuration = new Config();
                 configuration.imageLinks = new List<ImageLink>();
                 configuration.distributors = new List<Distributor>();
+                configuration.contactColor = "Black";
 
                 ImageLink link1 = new ImageLink();
                 link1.prettyName = "Otter Brine, Inc.";
                 link1.url = @"http://www.otterbine.com";
                 link1.width = 58;
                 link1.height = 40;
-                link1.xStart = 24;
-                link1.yStart = 729;
+                link1.xStart = 9;
+                link1.yStart = 733;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
@@ -340,8 +362,8 @@ namespace PdfImageChanger
                 link1.url = @"http://www.foleyunited.com/Home";
                 link1.width = 70;
                 link1.height = 40;
-                link1.xStart = 93;
-                link1.yStart = 729;
+                link1.xStart = 9;
+                link1.yStart = 684;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
@@ -349,8 +371,8 @@ namespace PdfImageChanger
                 link1.url = @"http://www.true-surface.com";
                 link1.width = 87;
                 link1.height = 40;
-                link1.xStart = 180;
-                link1.yStart = 729;
+                link1.xStart = 100;
+                link1.yStart = 684;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
@@ -358,17 +380,17 @@ namespace PdfImageChanger
                 link1.url = @"http://turfcare-us.lely.com/en/our-products/broadcast-spreader/land-wheel-wfr-en-wgr";
                 link1.width = 60;
                 link1.height = 40;
-                link1.xStart = 282;
-                link1.yStart = 729;
+                link1.xStart = 84;
+                link1.yStart = 733;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
                 link1.prettyName = "Paraide";
                 link1.url = @"http://www.paraide.com";
-                link1.width = 63;
+                link1.width = 46;
                 link1.height = 40;
-                link1.xStart = 350;
-                link1.yStart = 729;
+                link1.xStart = 174;
+                link1.yStart = 733;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
@@ -376,17 +398,26 @@ namespace PdfImageChanger
                 link1.url = @"http://www.standardgolf.com";
                 link1.width = 90;
                 link1.height = 40;
-                link1.xStart = 421;
-                link1.yStart = 729;
+                link1.xStart = 198;
+                link1.yStart = 684;
                 configuration.imageLinks.Add(link1);
 
                 link1 = new ImageLink();
                 link1.prettyName = "SGM Industries";
                 link1.url = @"http://www.sgmindustries.com/products";
-                link1.width = 56;
+                link1.width = 57;
                 link1.height = 40;
-                link1.xStart = 530;
-                link1.yStart = 729;
+                link1.xStart = 253;
+                link1.yStart = 733;
+                configuration.imageLinks.Add(link1);
+
+                link1 = new ImageLink();
+                link1.prettyName = "Echo";
+                link1.url = @"http://www.echo-usa.com";
+                link1.width = 104;
+                link1.height = 29;
+                link1.xStart = 302;
+                link1.yStart = 684;
                 configuration.imageLinks.Add(link1);
 
                 Distributor dist1 = new Distributor();

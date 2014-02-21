@@ -34,13 +34,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5A9262EFFC9B95B69B103C6A6FFD2D9E"
+        "OwnerKey" = "8:_7DE8BE1C512340969E68D050C5FEEEB6"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_7DE8BE1C512340969E68D050C5FEEEB6"
+        "OwnerKey" = "8:_5A9262EFFC9B95B69B103C6A6FFD2D9E"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -61,6 +61,27 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0,Profile=Client"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4 Client Profile (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0,Profile=Client"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
+            }
         }
         "Release"
         {
@@ -77,6 +98,27 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0,Profile=Client"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4 Client Profile (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0,Profile=Client"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
+            }
         }
     }
     "Deployable"
@@ -113,11 +155,6 @@
             "AssemblyAsmDisplayName" = "8:PdfSharp-WPF, Version=1.32.2608.0, Culture=neutral, PublicKeyToken=f94615aa0424f9eb, processorArchitecture=MSIL"
                 "ScatterAssemblies"
                 {
-                    "_5A9262EFFC9B95B69B103C6A6FFD2D9E"
-                    {
-                    "Name" = "8:PdfSharp-WPF.dll"
-                    "Attributes" = "3:512"
-                    }
                 }
             "SourcePath" = "8:PdfSharp-WPF.dll"
             "TargetName" = "8:"
@@ -213,15 +250,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:PDF Newsletter Editor"
-        "ProductCode" = "8:{47C0C450-6041-4CE5-83F9-60B656536292}"
-        "PackageCode" = "8:{9A7A5E01-4D49-4D81-821C-145D12F7136E}"
+        "ProductCode" = "8:{58DC7A62-4425-4877-9C77-225F9E7F1F70}"
+        "PackageCode" = "8:{6A48F79C-5A06-438D-8336-762B2EE11FFE}"
         "UpgradeCode" = "8:{E28D80BA-4C21-4F1C-A76B-5F4331EE0B18}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:TRUE"
-        "ProductVersion" = "8:1.0.0"
+        "ProductVersion" = "8:1.0.4"
         "Manufacturer" = "8:Adam Tebbe"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -336,7 +373,7 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_12632C2E2B834FF9AA6DB0D832EDD7E9"
             {
-            "Name" = "8:PDF Newletter Editor v1.0.0"
+            "Name" = "8:PDF Newletter Editor v1.0.3"
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
@@ -344,6 +381,20 @@
             "Transitive" = "11:FALSE"
             "Target" = "8:_7DE8BE1C512340969E68D050C5FEEEB6"
             "Folder" = "8:_11732D3B42AC48C2B0D737221F2703BC"
+            "WorkingFolder" = "8:_EDD5A524C568463D984F333427511E87"
+            "Icon" = "8:_885269DFD18F4EC99288E751913D2BC6"
+            "Feature" = "8:"
+            }
+            "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_92708FD0BE4D4F91B38B494457F0F544"
+            {
+            "Name" = "8:PDF Newletter Editor v1.0.3"
+            "Arguments" = "8:"
+            "Description" = "8:"
+            "ShowCmd" = "3:1"
+            "IconIndex" = "3:0"
+            "Transitive" = "11:FALSE"
+            "Target" = "8:_7DE8BE1C512340969E68D050C5FEEEB6"
+            "Folder" = "8:_9C5DA24C45464181AE9D3C67AB13B0EF"
             "WorkingFolder" = "8:_EDD5A524C568463D984F333427511E87"
             "Icon" = "8:_885269DFD18F4EC99288E751913D2BC6"
             "Feature" = "8:"
@@ -753,7 +804,7 @@
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_EDD5A524C568463D984F333427511E87"
-            "Condition" = "8:"
+            "Condition" = "8:fontBrushfontBrushfontBrush"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
             "ReadOnly" = "11:FALSE"

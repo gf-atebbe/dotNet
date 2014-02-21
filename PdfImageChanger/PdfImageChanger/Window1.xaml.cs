@@ -1,9 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Collections;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -43,6 +45,19 @@ namespace PdfImageChanger
             configObj = appConfig;
             dataGrid1.ItemsSource = _configObj.imageLinks;
             dataGrid2.ItemsSource = _configObj.distributors;
+
+            ArrayList knownColors = new ArrayList();
+            foreach (KnownColor col in Enum.GetValues(typeof(KnownColor)))
+            {
+                System.Drawing.Color color = System.Drawing.Color.FromKnownColor(col);
+                if (!color.IsSystemColor)
+                {
+                    knownColors.Add(col.ToString());
+                }
+            }
+
+            ColorPicker.ItemsSource = knownColors;
+            ColorPicker.SelectedIndex = knownColors.IndexOf(appConfig.contactColor);
         }
 
         #endregion
@@ -52,6 +67,7 @@ namespace PdfImageChanger
         private void button1_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
+            this.configObj.contactColor = ColorPicker.SelectedValue.ToString();
             this.Close();
         }
 
